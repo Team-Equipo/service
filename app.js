@@ -1,19 +1,12 @@
-require("dotenv").config();
-
 const express = require("express");
 const pgp = require("pg-promise")();
 
 const db = pgp({
-  host: process.env.DB_TEST_SERVER,
+  host: process.env.DB_SERVER,
   port: process.env.DB_PORT,
-  database: process.env.DB_TEST_USER,
-  user: process.env.DB_TEST_USER,
-  password: process.env.DB_TEST_PASSWORD,
-  // host: process.env.DB_SERVER,
-  // port: process.env.DB_PORT,
-  // database: process.env.DB_USER,
-  // user: process.env.DB_USER,
-  // password: process.env.DB_PASSWORD,
+  database: process.env.DB_USER,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
 });
 
 const app = express();
@@ -39,6 +32,8 @@ function returnDataOr404(res, data) {
   }
 }
 
+
+// =========== Get Table Data =========== //
 function readHelloMessage(req, res) {
   res.send("Hola, servicio CS262 Lingucididad!");
 }
@@ -54,7 +49,7 @@ function readUsers(req, res, next) {
 }
 
 function readUser(req, res, next) {
-  db.oneOrNone("SELECT * FROM user_account WHERE id=${id}", req.params)
+  db.oneOrNone("SELECT * FROM user_account WHERE user_account_id=${id}", req.params)
     .then((data) => {
       returnDataOr404(res, data);
     })
@@ -91,7 +86,7 @@ function createUser(req, res, next) {
 
 function deleteUser(req, res, next) {
   db.oneOrNone(
-    "DELETE FROM user_account WHERE id=${id} RETURNING id",
+    "DELETE FROM user_account WHERE user_account_id=${id} RETURNING id",
     req.params,
   )
     .then((data) => {
