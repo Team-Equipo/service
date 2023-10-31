@@ -1,5 +1,3 @@
-require("dotenv").config();
-
 const express = require("express");
 const pgp = require("pg-promise")();
 
@@ -11,12 +9,10 @@ const db = pgp({
   password: process.env.DB_PASSWORD,
 });
 
-const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 const router = express.Router();
 router.use(express.json());
-app.use(cors());
 
 router.get("/", readHelloMessage);
 router.get("/user", readUsers);
