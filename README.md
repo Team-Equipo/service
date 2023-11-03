@@ -1,7 +1,7 @@
 # Lingucidity WebService
 
-This is the data service application for the
-[This is the data service application for Lingucidity](https://github.com/Team-Equipo/project),
+This is the data service application for
+[Lingucidity](https://github.com/Team-Equipo/project),
 which is deployed here:
 
 - <https://lingucidity.azurewebsites.net/>
