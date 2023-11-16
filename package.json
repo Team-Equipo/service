@@ -12,6 +12,7 @@
     "start": "node app.js"
   },
   "dependencies": {
+    "@hapi/hapi": "^21.3.2",
     "express": "^4.17.1",
     "pg-promise": "^10.12.1"
   }
