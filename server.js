@@ -24,6 +24,29 @@ const init = async () => {
     },
   });
 
+  server.route({
+    method: "POST",
+    path: "/user",
+    handler: (request, h) => {
+      const firstname = request.payload.firstname;
+      const lastname = request.payload.lastname;
+      const emailaddress = request.payload.emailaddress;
+      const password = request.payload.password;
+
+      db.none(
+        "INSERT INTO useraccount (firstname, lastname, emailaddress, password) VALUES ($1, $2, $3, $4)",
+        [
+          request.payload.firstname,
+          request.payload.lastname,
+          request.payload.emailaddress,
+          request.payload.password,
+        ]
+      );
+
+      return "Success";
+    },
+  });
+
   await server.start();
   console.log(`Server running on ${server.info.uri}`);
 };
