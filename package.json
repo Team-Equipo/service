@@ -2,17 +2,19 @@
   "name": "lingucidity-webservice",
   "version": "1.0.0",
   "description": "Lingucidity Webservice",
-  "main": "app.js",
+  "main": "server.js",
   "author": "teamEquipo",
   "license": "ISC",
   "engines": {
     "node": "19.x"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
+    "@hapi/basic": "^7.0.2",
+    "@hapi/hapi": "^21.3.2",
+    "bcrypt": "^5.1.1",
     "pg-promise": "^10.12.1"
   }
 }
