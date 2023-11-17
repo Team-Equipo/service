@@ -1,4 +1,6 @@
 const pgp = require("pg-promise")();
+const Hapi = require("@hapi/hapi");
+const bcrypt = require("bcrypt");
 
 const db = pgp({
   host: process.env.DB_SERVER,
@@ -8,13 +10,36 @@ const db = pgp({
   password: process.env.DB_PASSWORD,
 });
 
-const Hapi = require("@hapi/hapi");
+const validate = async (request, emailaddress, password) => {
+  const user = await db.oneOrNone(
+    "SELECT firstname, lastname, password, token FROM useraccount WHERE emailaddress = $1",
+    emailaddress
+  );
+
+  if (!user) {
+    return { isValid: false, credentials: null };
+  }
+
+  const isValid = await bcrypt.compare(password, user.password);
+
+  const credentials = {
+    firstname: user.firstname,
+    lastname: user.lastname,
+    emailaddress: emailaddress,
+    token: user.token,
+  };
+
+  return { isValid, credentials };
+};
 
 const init = async () => {
   const server = Hapi.server({
     port: process.env.PORT || 3000,
     host: process.env.SERVER || "localhost",
   });
+
+  await server.register(require("@hapi/basic"));
+  server.auth.strategy("simple", "basic", { validate });
 
   server.route({
     method: "GET",
@@ -24,26 +49,39 @@ const init = async () => {
     },
   });
 
+  // Authenticate a user and return credentials if valid
+  server.route({
+    method: "GET",
+    path: "/user",
+    config: {
+      auth: "simple",
+    },
+    handler: async (request, h) => {
+      return request.auth.credentials;
+    },
+  });
+
+  // Create a new user
   server.route({
     method: "POST",
     path: "/user",
-    handler: (request, h) => {
-      const firstname = request.payload.firstname;
-      const lastname = request.payload.lastname;
+    handler: async (request, h) => {
       const emailaddress = request.payload.emailaddress;
-      const password = request.payload.password;
+      const hashedPassword = await bcrypt.hash(request.payload.password, 10);
+      const token = await bcrypt.hash(emailaddress, 10);
 
       db.none(
-        "INSERT INTO useraccount (firstname, lastname, emailaddress, password) VALUES ($1, $2, $3, $4)",
+        "INSERT INTO useraccount (firstname, lastname, emailaddress, password, token) VALUES ($1, $2, $3, $4, $5)",
         [
           request.payload.firstname,
           request.payload.lastname,
-          request.payload.emailaddress,
-          request.payload.password,
+          emailaddress,
+          hashedPassword,
+          token,
         ]
       );
 
-      return "Success";
+      return token;
     },
   });
 
