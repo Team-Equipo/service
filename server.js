@@ -35,7 +35,6 @@ const validate = async (request, emailaddress, password) => {
 const init = async () => {
   const server = Hapi.server({
     port: process.env.PORT || 3000,
-    host: process.env.SERVER || "localhost",
   });
 
   await server.register(require("@hapi/basic"));
