@@ -60,6 +60,32 @@ const init = async () => {
     },
   });
 
+  // Get a list of phrases
+  server.route({
+    method: "GET",
+    path: "/user/{user_id}/phrase",
+    handler: async (request, h) => {
+      const phrases = await db.any(
+        "SELECT * FROM generated_phrases WHERE userID = $1",
+        request.params.user_id
+      );
+      return phrases;
+    }
+  });
+
+  // Get a specific phrase
+  server.route({
+    method: "GET",
+    path: "/user/{user_id}/phrase/{phrase_id}",
+    handler: async (request, h) => {
+      const phrases = await db.oneOrNone(
+        "SELECT * FROM generated_phrases WHERE userID = $1 AND generated_phrases_id = $2",
+        [request.params.user_id, request.params.phrase_id]
+      );
+      return phrases;
+    }
+  });
+
   // Create a new user
   server.route({
     method: "POST",
