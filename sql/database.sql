@@ -25,6 +25,7 @@ CREATE TABLE phrases (
     translatedtext VARCHAR(512) NOT NULL,
     topic VARCHAR(512) NOT NULL,
     issaved BOOLEAN NOT NULL,
+    isloading BOOLEAN NOT NULL,
     userid INTEGER REFERENCES useraccount(id)
 );
 
@@ -59,6 +60,7 @@ INSERT INTO
         translatedtext,
         topic,
         issaved,
+        isloading,
         userid
     )
 VALUES
@@ -66,6 +68,7 @@ VALUES
         'Hello',
         'Hola',
         'Greetings',
+        false,
         false,
         1
     );
