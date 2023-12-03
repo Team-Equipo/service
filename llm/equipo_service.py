@@ -6,7 +6,12 @@ import random, os
 import psycopg2
 import uvicorn
 
-from equipo_llm import generate_phrases_and_translations, GenerationResponse
+from equipo_llm import (
+    generate_topics,
+    generate_phrases_and_translations,
+    TopicGenerationResponse,
+    PhraseGenerationResponse,
+)
 
 app = FastAPI()
 
@@ -23,6 +28,10 @@ class UpdateRequest(BaseModel):
     phrase_id: int
 
 
+class TopicRequest(BaseModel):
+    user_id: int
+
+
 load_dotenv()
 up.uses_netloc.append("postgres")
 url = up.urlparse(os.getenv("ELEPHANT_SQL_URL"))
@@ -35,8 +44,11 @@ conn = psycopg2.connect(
 )
 
 
+# Regenerate phrase tied to user_id and phrase_id
 def update_phrase(user_id, phrase_id):
     cur = conn.cursor()
+
+    # Get the topic, hobby, food, and destination
     cur.execute(
         """
         SELECT topic, hobby, favoritefood, destination
@@ -45,15 +57,16 @@ def update_phrase(user_id, phrase_id):
               phrases.userid = %s AND
               phrases.id = %s
         """,
-        (user_id, user_id, user_id, phrase_id),
+        (user_id, user_id, phrase_id),
     )
     query = cur.fetchall()[0]
 
     random_hobby = random.choice(query[1])
     random_food = random.choice(query[2])
 
-    response = GenerationResponse(phrases=[], translations=[])
+    response = PhraseGenerationResponse(phrases=[], translations=[])
 
+    # Keep generating until we get a good response
     while (
         len(response.phrases) == 0
         or len(response.translations) == 0
@@ -70,6 +83,7 @@ def update_phrase(user_id, phrase_id):
 
     random_index = random.randint(0, len(response.phrases) - 1)
 
+    # Update the phrase in the database
     cur.execute(
         """
         UPDATE phrases 
@@ -89,16 +103,114 @@ def update_phrase(user_id, phrase_id):
     return response.phrases[random_index], response.translations[random_index]
 
 
+# Get topics tied to user_id
+def get_topics(user_id):
+    cur = conn.cursor()
+
+    # Check if the user is new
+    cur.execute(
+        """
+        SELECT *
+        FROM phrases
+        WHERE userid = %s
+        """,
+        (user_id,),
+    )
+
+    # If the user is new, generate topics and phrases
+    if cur.rowcount == 0:
+        # Get the hobby, food, and destination
+        cur.execute(
+            """
+            SELECT hobby, favoritefood, destination
+            FROM useraccount
+            WHERE id = %s
+            """,
+            (user_id,),
+        )
+        query = cur.fetchall()[0]
+
+        random_hobby = random.choice(query[1])
+        random_food = random.choice(query[2])
+
+        response = TopicGenerationResponse(topics=[])
+
+        # Keep generating until we get a good response
+        while len(response.topics) == 0:
+            response = generate_topics(
+                GenerationRequest(
+                    topic="None",
+                    hobby=random_hobby,
+                    food=random_food,
+                    destination_country=query[2],
+                )
+            )
+
+        for topic in response.topics:
+            # Generate five phrases and translations for each topic
+            for i in range(5):
+                pgen_response = PhraseGenerationResponse(phrases=[], translations=[])
+
+                # Keep generating until we get a good response
+                while (
+                    len(pgen_response.phrases) == 0
+                    or len(pgen_response.translations) == 0
+                    or len(pgen_response.phrases) != len(pgen_response.translations)
+                ):
+                    pgen_response = generate_phrases_and_translations(
+                        GenerationRequest(
+                            topic=topic,
+                            hobby=random_hobby,
+                            food=random_food,
+                            destination_country=query[2],
+                        )
+                    )
+
+                random_index = random.randint(0, len(pgen_response.phrases) - 1)
+
+                # Insert the phrase into the database
+                cur.execute(
+                    """
+                    INSERT INTO phrases (userid, topic, originaltext, translatedtext, issaved, isloading) 
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        user_id,
+                        topic,
+                        pgen_response.phrases[random_index],
+                        pgen_response.translations[random_index],
+                        False,
+                        False,
+                    ),
+                )
+
+                conn.commit()
+
+        return response.topics
+
+    else:
+        return None
+
+
+# Endpoint for regenerating phrases
 @app.put("/update_phrase")
 async def update_phrase_handler(request: UpdateRequest):
     try:
         phrase, translation = update_phrase(request.user_id, request.phrase_id)
         return {"phrase": phrase, "translation": translation}
-    except:
-        raise HTTPException(status_code=500, detail="Failed to update phrase")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=e)
+
+
+# Endpoint for getting topics and generating phrases
+@app.get("/get_topics")
+async def get_topics_handler(request: TopicRequest):
+    try:
+        topics = get_topics(request.user_id)
+        return {"topics": topics}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=e)
 
 
 if __name__ == "__main__":
     uvicorn.run("equipo_service:app", host="0.0.0.0", port=52409, reload=True)
-
-# curl -X PUT -H "Content-Type: application/json" -d '{"user_id": "1", "phrase_id": "1"}' http://localhost:52409/update_phrase
