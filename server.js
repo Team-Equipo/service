@@ -107,13 +107,16 @@ const init = async () => {
       const token = await bcrypt.hash(emailaddress, 10);
 
       db.none(
-        "INSERT INTO useraccount (firstname, lastname, emailaddress, password, token) VALUES ($1, $2, $3, $4, $5)",
+        "INSERT INTO useraccount (firstname, lastname, emailaddress, password, token, hobby, favoritefood, destination) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
         [
           request.payload.firstname,
           request.payload.lastname,
           emailaddress,
           hashedPassword,
           token,
+          request.payload.hobby,
+          request.payload.favoritefood,
+          request.payload.destination
         ]
       );
 
