@@ -2,7 +2,7 @@
 
 This is the data service application for [Lingucidity](https://github.com/Team-Equipo), which is deployed here: [https://jk249.azurewebsites.net/](https://jk249.azurewebsites.net/)
 
-Here is a description of the endpoints:
+Here is a description of the public endpoints:
 
 HTTP Method | URL | Description
 --- | --- | ---
