@@ -1,18 +1,28 @@
-from langchain.llms import VLLM
+from langchain.llms import VLLM, LlamaCpp
 from langchain.prompts.chat import ChatPromptTemplate
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from pydantic import BaseModel
 import re
 
-model_path = "CalvinU/Llama-2-7b-chat-hf-awq"
+# model_path = "CalvinU/Llama-2-7b-chat-hf-awq"
 
-# Instantiate the VLLM model for inference
-llm = VLLM(
-    model=model_path,
-    trust_remote_code=True,
-    max_new_tokens=128,
-    top_k=10,
-    top_p=0.95,
-    temperature=0.8,
+# # Instantiate the VLLM model for inference
+# llm = VLLM(
+#     model=model_path,
+#     trust_remote_code=True,
+#     max_new_tokens=128,
+#     top_k=10,
+#     top_p=0.95,
+#     temperature=0.8,
+# )
+
+model_path = "/home/jk249/service/Llama-2-7b-chat-hf/llama-2-7b-chat-hf.gguf.q4_k_m.bin"
+
+llm = LlamaCpp(
+    model_path=model_path,
+    temperature=1,
+    callbacks=[StreamingStdOutCallbackHandler()],
+    verbose=False,
 )
 
 # Topic generation template
