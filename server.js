@@ -1,7 +1,9 @@
+// Imports
 const pgp = require("pg-promise")();
 const Hapi = require("@hapi/hapi");
 const bcrypt = require("bcrypt");
 
+// Configure the database connection
 const db = pgp({
   host: process.env.DB_SERVER,
   port: process.env.DB_PORT,
@@ -10,6 +12,7 @@ const db = pgp({
   password: process.env.DB_PASSWORD,
 });
 
+// Very basic in-house validation of user credentials
 const validate = async (request, emailaddress, password) => {
   const user = await db.oneOrNone(
     "SELECT firstname, lastname, password, token FROM useraccount WHERE emailaddress = $1",
@@ -32,6 +35,7 @@ const validate = async (request, emailaddress, password) => {
   return { isValid, credentials };
 };
 
+// Hapi server with endpoints
 const init = async () => {
   const server = Hapi.server({
     port: process.env.PORT || 3000,
@@ -40,11 +44,12 @@ const init = async () => {
   await server.register(require("@hapi/basic"));
   server.auth.strategy("simple", "basic", { validate });
 
+  // Hello world
   server.route({
     method: "GET",
     path: "/",
     handler: (request, h) => {
-      return "Hola, mundo!";
+      return "Hola, servicio CS262 Lingucididad!";
     },
   });
 
@@ -114,11 +119,13 @@ const init = async () => {
   console.log(`Server running on ${server.info.uri}`);
 };
 
+// Handle unhandled promise rejections
 process.on("unhandledRejection", (err) => {
   console.log(err);
   process.exit(1);
 });
 
+// Start the server
 init();
 
 // const express = require("express");
