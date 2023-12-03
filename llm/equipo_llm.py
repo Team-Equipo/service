@@ -1,63 +1,74 @@
-from langchain.llms import LlamaCpp
+from langchain.llms import VLLM
 from langchain.prompts.chat import ChatPromptTemplate
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-
 from pydantic import BaseModel
 import re
 
-model_path = "/home/jk249/service/Llama-2-7b-chat-hf/llama-2-7b-chat-hf.gguf.q4_k_m.bin"
+model_path = "CalvinU/Llama-2-7b-chat-hf-awq"
 
-model = LlamaCpp(
-    model_path=model_path,
-    temperature=1,
-    callbacks=[StreamingStdOutCallbackHandler()],
-    verbose=False,
+# Instantiate the VLLM model for inference
+llm = VLLM(
+    model=model_path,
+    trust_remote_code=True,
+    max_new_tokens=128,
+    top_k=10,
+    top_p=0.95,
+    temperature=0.8,
 )
 
-translation_template = """
+# Topic generation template
+topic_gen_template = """
 <s>[INST] <<SYS>>
-You are a helpful English to Spanish translator. Your reponse should be in Spanish. Your reponse should only contain the translation itself.
+You are a list generator. Your reponse should only contain a list of 5 relevant topics. They should be one or two words in length. Do not include any other information.
 <</SYS>>
 
-Translate {text} into Spanish [/INST]
+I am visiting {destination_country} for a vacation. My hobby is {hobby} and my favorite food is {food}. 
+I want relevant topics. Example topics include: Greetings, Public utilities, Night life, Shopping, etc. [\INST]
 """
 
-translation_prompt = ChatPromptTemplate.from_template(translation_template)
-translation_chain = translation_prompt | model
+# Topic generation prompt and chain
+topic_gen_prompt = ChatPromptTemplate.from_template(topic_gen_template)
+topic_gen_chain = topic_gen_prompt | llm
 
+# Phrase generation template
 phrase_gen_template = """
 <s>[INST] <<SYS>>
-You are a list generator. Your reponse should only contain a list of 2 relevant phrases. Do not include any other information.
+You are a list generator. Your reponse should only contain a list of 3 relevant phrases. Do not include any other information.
 <</SYS>>
 
 I am visiting {destination_country}. My hobby is {hobby} and my favorite food is {food}. I want relevant phrases about {topic}. [\INST]
 """
 
+# Phrase generation prompt and chain
 phrase_gen_prompt = ChatPromptTemplate.from_template(phrase_gen_template)
-phrase_gen_chain = phrase_gen_prompt | model
-
-# phrase_competition_template = """
-# <s>[INST] <<SYS>>
-# You should give a list of example sentences in Spanish that completes the given phrase.
-# <</SYS>>
-
-# {phrase} [\INST]
-# """
-
-# phrase_competition_prompt = ChatPromptTemplate.from_template(phrase_competition_template)
-# phrase_competition_chain = phrase_competition_prompt | model
-
-# phrase_competition_chain.invoke({"phrase": "¿Qué número de emergencias"})
+phrase_gen_chain = phrase_gen_prompt | llm
 
 
-class GenerationResponse(BaseModel):
+class PhraseGenerationResponse(BaseModel):
     phrases: list
     translations: list
 
 
-def generate_phrases_and_translations(
-    request,
-) -> GenerationResponse:
+class TopicGenerationResponse(BaseModel):
+    topics: list
+
+
+# Generate topics
+def generate_topics(request) -> TopicGenerationResponse:
+    response = topic_gen_chain.invoke(
+        {
+            "destination_country": request.destination_country,
+            "hobby": request.hobby,
+            "food": request.food,
+        }
+    )
+
+    topics = re.findall(r"\d+\.\s(.+)", response)
+
+    return TopicGenerationResponse(topics=topics)
+
+
+# Generate phrases
+def generate_phrases_and_translations(request) -> PhraseGenerationResponse:
     response = phrase_gen_chain.invoke(
         {
             "topic": request.topic,
@@ -78,4 +89,4 @@ def generate_phrases_and_translations(
 
     translations = re.findall(r"\((.*?)\)", response)
 
-    return GenerationResponse(phrases=phrases, translations=translations)
+    return PhraseGenerationResponse(phrases=phrases, translations=translations)
