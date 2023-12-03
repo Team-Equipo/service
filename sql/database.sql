@@ -48,7 +48,7 @@ VALUES
         'password',
         'token',
         '{"reading", "coding"}',
-        '{"pizza", "cycline"}',
+        '{"pizza", "cycling"}',
         'Spain'
     );
 
