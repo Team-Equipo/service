@@ -2,6 +2,12 @@
 const pgp = require("pg-promise")();
 const Hapi = require("@hapi/hapi");
 const bcrypt = require("bcrypt");
+const dotenv = require("dotenv");
+
+// Load environment variables from .env file if not in production
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 // Configure the database connection
 const db = pgp({
@@ -49,7 +55,7 @@ const init = async () => {
     method: "GET",
     path: "/",
     handler: (request, h) => {
-      return "Hola, servicio CS262 Lingucididad!";
+      return "Hola, servicio CS-262 Lingucididad!";
     },
   });
 
