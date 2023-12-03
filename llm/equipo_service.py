@@ -39,12 +39,11 @@ def update_phrase(user_id, phrase_id):
     cur = conn.cursor()
     cur.execute(
         """
-        SELECT topic, hobby, favorite_food, destination_country
-        FROM user_account, travel_plan, generated_phrases
-        WHERE user_account.user_account_id = %s AND
-              travel_plan.userid = %s AND
-              generated_phrases.userid = %s AND
-              generated_phrases.generated_phrases_id = %s
+        SELECT topic, hobby, favoritefood, destination
+        FROM useraccount, phrases
+        WHERE useraccount.id = %s AND
+              phrases.userid = %s AND
+              phrases.id = %s
         """,
         (user_id, user_id, user_id, phrase_id),
     )
@@ -73,11 +72,11 @@ def update_phrase(user_id, phrase_id):
 
     cur.execute(
         """
-        UPDATE generated_phrases 
-        SET text_original = %s, 
-            text_translated = %s,
+        UPDATE phrases 
+        SET originaltext = %s, 
+            translatedtext = %s,
             isloading=false
-        WHERE generated_phrases_id = %s
+        WHERE phrases.id = %s
         """,
         (
             response.phrases[random_index],
