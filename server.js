@@ -77,7 +77,7 @@ const init = async () => {
     path: "/user/{user_id}/phrase",
     handler: async (request, h) => {
       const phrases = await db.any(
-        "SELECT * FROM generated_phrases WHERE userID = $1",
+        "SELECT * FROM phrases WHERE userid = $1",
         request.params.user_id
       );
       return phrases;
@@ -90,7 +90,7 @@ const init = async () => {
     path: "/user/{user_id}/phrase/{phrase_id}",
     handler: async (request, h) => {
       const phrases = await db.oneOrNone(
-        "SELECT * FROM generated_phrases WHERE userID = $1 AND generated_phrases_id = $2",
+        "SELECT * FROM phrases WHERE userid = $1 AND id = $2",
         [request.params.user_id, request.params.phrase_id]
       );
       return phrases;
