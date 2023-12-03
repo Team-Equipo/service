@@ -32,6 +32,11 @@ class TopicRequest(BaseModel):
     user_id: int
 
 
+class TopicalRequest(BaseModel):
+    user_id: int
+    topic: str
+
+
 load_dotenv()
 up.uses_netloc.append("postgres")
 url = up.urlparse(os.getenv("ELEPHANT_SQL_URL"))
@@ -192,6 +197,63 @@ def get_topics(user_id):
         return None
 
 
+# Generate five phrases based on user defined topic
+def topical_generation(user_id, topic):
+    cur = conn.cursor()
+
+    # Get the hobby, food, and destination
+    cur.execute(
+        """
+        SELECT hobby, favoritefood, destination
+        FROM useraccount
+        WHERE id = %s
+        """,
+        (user_id,),
+    )
+    query = cur.fetchall()[0]
+
+    random_hobby = random.choice(query[1])
+    random_food = random.choice(query[2])
+
+    for i in range(5):
+        response = PhraseGenerationResponse(phrases=[], translations=[])
+
+        # Keep generating until we get a good response
+        while (
+            len(response.phrases) == 0
+            or len(response.translations) == 0
+            or len(response.phrases) != len(response.translations)
+        ):
+            response = generate_phrases_and_translations(
+                GenerationRequest(
+                    topic=topic,
+                    hobby=random_hobby,
+                    food=random_food,
+                    destination_country=query[2],
+                )
+            )
+
+        random_index = random.randint(0, len(response.phrases) - 1)
+
+        # Insert the phrase into the database
+        cur.execute(
+            """
+            INSERT INTO phrases (userid, topic, originaltext, translatedtext, issaved, isloading) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (
+                user_id,
+                topic,
+                response.phrases[random_index],
+                response.translations[random_index],
+                False,
+                False,
+            ),
+        )
+
+        conn.commit()
+
+
 # Endpoint for regenerating phrases
 @app.put("/update_phrase")
 async def update_phrase_handler(request: UpdateRequest):
@@ -208,6 +270,16 @@ async def get_topics_handler(request: TopicRequest):
     try:
         topics = get_topics(request.user_id)
         return {"topics": topics}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=e)
+
+
+# Endpoint for generating phrases based on topic
+@app.get("/topical_generation")
+async def topical_generation_handler(request: TopicalRequest):
+    try:
+        topical_generation(request.user_id, request.topic)
+        return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=e)
 
