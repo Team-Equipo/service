@@ -2,10 +2,10 @@
 -- Use this file to test the database in local PostgreSQL environment
 
 -- Drop previous tables if they exist
-DROP TABLE IF EXISTS useraccount;
 DROP TABLE IF EXISTS phrases;
+DROP TABLE IF EXISTS useraccount;
 
--- User account schema
+-- Create user account schema
 CREATE TABLE useraccount (
     id SERIAL PRIMARY KEY,
     firstname VARCHAR(512) NOT NULL,
@@ -15,10 +15,10 @@ CREATE TABLE useraccount (
     token VARCHAR(512) NOT NULL,
     hobby TEXT [],
     favoritefood TEXT [],
-    destination VARCHAR(512) NOT NULL,
+    destination VARCHAR(512) NOT NULL
 );
 
--- Phrases schema
+-- Create phrases schema
 CREATE TABLE phrases (
     id SERIAL PRIMARY KEY,
     originaltext VARCHAR(512) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE phrases (
     userid INTEGER REFERENCES useraccount(id)
 );
 
--- Test user account
+-- Insert into user account dummy data
 INSERT INTO
     useraccount (
         firstname,
@@ -42,17 +42,17 @@ INSERT INTO
     )
 VALUES
     (
-        'testfirstname',
-        'testlastname',
-        'testemailaddress',
-        'testpassword',
-        'testtoken',
-        '{"music listening", "eating"}',
-        '{"pizza", "pasta"}',
-        'testdestination'
+        'John',
+        'Doe',
+        'john.doe@calvin.edu',
+        'password',
+        'token',
+        '{"reading", "coding"}',
+        '{"pizza", "cycline"}',
+        'Spain'
     );
 
--- Test phrases
+-- Insert into phrases dummy data
 INSERT INTO
     phrases (
         originaltext,
@@ -63,9 +63,9 @@ INSERT INTO
     )
 VALUES
     (
-        'testoriginaltext',
-        'testtranslatedtext',
-        'testtopic',
-        'testissaved',
+        'Hello',
+        'Hola',
+        'Greetings',
+        false,
         1
     );
