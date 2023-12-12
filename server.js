@@ -120,7 +120,7 @@ const init = async () => {
         ]
       );
 
-      return token;
+      return JSON.stringify(token);
     },
   });
 
