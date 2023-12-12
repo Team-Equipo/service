@@ -23,6 +23,15 @@ class GenerationRequest(BaseModel):
     food: str
 
 
+class GenerationResponse(BaseModel):
+    userid: int
+    topic: str
+    originaltext: str
+    translatedtext: str
+    issaved: bool
+    isloading: bool
+
+
 class UpdateRequest(BaseModel):
     user_id: int
     phrase_id: int
@@ -215,6 +224,9 @@ def topical_generation(user_id, topic):
     random_hobby = random.choice(query[1])
     random_food = random.choice(query[2])
 
+    original_texts = []
+    translated_texts = []
+
     for i in range(5):
         response = PhraseGenerationResponse(phrases=[], translations=[])
 
@@ -235,23 +247,38 @@ def topical_generation(user_id, topic):
 
         random_index = random.randint(0, len(response.phrases) - 1)
 
-        # Insert the phrase into the database
-        cur.execute(
-            """
-            INSERT INTO phrases (userid, topic, originaltext, translatedtext, issaved, isloading) 
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """,
-            (
-                user_id,
-                topic,
-                response.phrases[random_index],
-                response.translations[random_index],
-                False,
-                False,
-            ),
-        )
+        original_texts.append(response.phrases[random_index])
+        translated_texts.append(response.translations[random_index])
 
-        conn.commit()
+        # # Insert the phrase into the database
+        # cur.execute(
+        #     """
+        #     INSERT INTO phrases (userid, topic, originaltext, translatedtext, issaved, isloading)
+        #     VALUES (%s, %s, %s, %s, %s, %s)
+        #     """,
+        #     (
+        #         user_id,
+        #         topic,
+        #         response.phrases[random_index],
+        #         response.translations[random_index],
+        #         False,
+        #         False,
+        #     ),
+        # )
+
+        # conn.commit()
+
+    return [
+        GenerationResponse(
+            userid=user_id,
+            topic=topic,
+            originaltext=original_texts[i],
+            translatedtext=translated_texts[i],
+            issaved=False,
+            isloading=False,
+        )
+        for i in range(5)
+    ]
 
 
 # Endpoint for regenerating phrases
@@ -278,8 +305,7 @@ async def get_topics_handler(request: TopicRequest):
 @app.get("/topical_generation")
 async def topical_generation_handler(request: TopicalRequest):
     try:
-        topical_generation(request.user_id, request.topic)
-        return {"status": "success"}
+        return topical_generation(request.user_id, request.topic)
     except Exception as e:
         raise HTTPException(status_code=500, detail=e)
 
