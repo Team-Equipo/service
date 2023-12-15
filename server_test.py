@@ -1,4 +1,4 @@
-# Test for HTTP GET requests to the server
+# This module tests the server to make sure it is working properly.
 
 import requests
 

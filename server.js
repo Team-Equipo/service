@@ -1,3 +1,17 @@
+/**
+ * This module implements a simple Hapi server for the Lingucidity app.
+ * 
+ * It connects to a PostgreSQL database (hosted on ElephantSQL) and provides a REST API for clients.
+ * 
+ * The server provides the following endpoints:
+ * 
+ * GET / - a simple hello world endpoint
+ * GET /user - returns the user credentials if the user is authenticated
+ * GET /user/{user_id}/phrase - returns a list of phrases for the user
+ * GET /user/{user_id}/phrase/{phrase_id} - returns a specific phrase for the user
+ * POST /user - creates a new user
+ */
+
 // Imports
 const pgp = require("pg-promise")();
 const Hapi = require("@hapi/hapi");
