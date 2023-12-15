@@ -1,3 +1,5 @@
+# This module provides the Lingucidity client with LLM-related services.
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -46,6 +48,7 @@ class TopicalRequest(BaseModel):
     topic: str
 
 
+# Connect to the database (ElephantSQL)
 load_dotenv()
 up.uses_netloc.append("postgres")
 url = up.urlparse(os.getenv("ELEPHANT_SQL_URL"))

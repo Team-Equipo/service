@@ -1,3 +1,5 @@
+# This module provides necessary backend for the LLM service.
+
 from langchain.llms import VLLM, LlamaCpp
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
@@ -16,6 +18,7 @@ import re
 #     temperature=0.8,
 # )
 
+# Load the LLM model for inference
 model_path = "/home/jk249/service/Llama-2-7b-chat-hf/llama-2-7b-chat-hf.gguf.q4_k_m.bin"
 
 llm = LlamaCpp(
